@@ -57,3 +57,46 @@ img = Image.open(sorted(HR_STD.glob("*.jpg"))[random.randint(0, 109)])
 plt.imshow(img)
 plt.axis("off")
 print(img.size)
+
+"""# **Low-Resolution (LR) images 64x64**"""
+
+import cv2
+from pathlib import Path
+
+HR_STD = Path("/content/sr_project/HR_256")
+LR_DIR = Path("/content/sr_project/LR_x4")
+LR_DIR.mkdir(parents=True, exist_ok=True)
+
+scale = 4  # x4 super-resolution
+
+for p in HR_STD.glob("*.jpg"):
+    img = cv2.imread(str(p))
+    h, w = img.shape[:2]
+
+    # downsample
+    lr = cv2.resize(img, (w//scale, h//scale), interpolation=cv2.INTER_AREA)
+
+    # blur (extra degradation)
+    lr = cv2.GaussianBlur(lr, (3, 3), 0)
+
+    cv2.imwrite(str(LR_DIR / p.name), lr)
+
+print("HR images:", len(list(HR_STD.glob("*.jpg"))))
+print("LR images:", len(list(LR_DIR.glob("*.jpg"))))
+
+import matplotlib.pyplot as plt
+from PIL import Image
+import random
+
+hr_paths = sorted(list(HR_STD.glob("*.jpg")))
+p = random.choice(hr_paths)
+
+hr = Image.open(p)
+lr = Image.open(LR_DIR / p.name)
+
+plt.figure(figsize=(10,4))
+plt.subplot(1,2,1); plt.title("HR (256x256)"); plt.imshow(hr); plt.axis("off")
+plt.subplot(1,2,2); plt.title("LR (~64x64)"); plt.imshow(lr); plt.axis("off")
+plt.show()
+
+print("HR size:", hr.size, "LR size:", lr.size)
